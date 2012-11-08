@@ -6,9 +6,9 @@
 #include <iostream>
 
 /////////////////////////////////////////////////////////////////////
-// File Name               : IntervalTree.cs
-//      Created            : 06 8 2012   22:38
-//      Author             : Costin S
+// File Name               : IntervalTree.hpp
+//      Created            : 08 11 2012   10:45
+//      Authors            : Costin S, Jan Weiß
 //
 /////////////////////////////////////////////////////////////////////
 #define TREE_WITH_PARENT_POINTERS

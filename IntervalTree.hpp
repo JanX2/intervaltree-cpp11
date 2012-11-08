@@ -26,7 +26,7 @@ namespace IntervalTree {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 //C# TO C++ CONVERTER TODO TASK: There is no native C++ template equivalent to generic constraints:
-	template<typename T> where T : IComparable<T>
+	template<typename T> /*where T : IComparable<T>*/
 	class Interval {
 
 	public:
@@ -37,7 +37,7 @@ namespace IntervalTree {
 
 		Interval(T start, T end) : Interval() {
 			if (start->compare(end) >= 0) {
-				throw ArgumentException("the start value of the interval must be smaller than the end value. null interval are not allowed");
+				throw std::invalid_argument("the start value of the interval must be smaller than the end value. null interval are not allowed");
 			}
 
 			this->Start = start;
@@ -57,10 +57,12 @@ namespace IntervalTree {
 			return this->Start->compare(other.End) < 0 && this->End->compare(other.Start) > 0;
 		}
 
+#if 0
 		virtual std::string ToString() override {
 //C# TO C++ CONVERTER TODO TASK: There is no native C++ equivalent to 'ToString':
 			return std::string::Format("[{0}, {1}]", this->Start->ToString(), this->End->ToString());
 		}
+#endif
 
 	};
 
@@ -69,8 +71,17 @@ namespace IntervalTree {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 //C# TO C++ CONVERTER TODO TASK: There is no native C++ template equivalent to generic constraints:
-	template<typename T, typename TypeValue> where T : IComparable<T>
+	template<typename T, typename TypeValue> /* where T : IComparable<T> */
 	class IntervalTree {
+	public:
+		typedef Interval<T*> IntervalType; // was IntervalTree::Interval<T*>
+		typedef std::vector<IntervalType> IntervalVector;
+		
+		typedef std::pair<IntervalType*, TypeValue*> IntervalPair; // was KeyValuePair<IntervalType*, TypeValue*>
+		typedef std::vector<IntervalPair*> IntervalPairVector;
+		
+		typedef std::pair<T*, TypeValue*> TypePair; // was KeyValuePair<T*, TypeValue*>
+		typedef std::vector<TypePair*> TypePairVector; // was std::vector<typePair*>
 	private:
 		class IntervalNode {
 
@@ -107,12 +118,12 @@ namespace IntervalTree {
 				privateRight = value;
 			}
 		private:
-			IntervalTree::Interval<T*> privateInterval;
+			IntervalType privateInterval;
 		public:
-			const IntervalTree::Interval<T*> &getInterval() const {
+			const IntervalType &getInterval() const {
 				return privateInterval;
 			}
-			void setInterval(const IntervalTree::Interval<T*> &value) {
+			void setInterval(const IntervalType &value) {
 				privateInterval = value;
 			}
 		private:
@@ -125,12 +136,12 @@ namespace IntervalTree {
 				privateValue = value;
 			}
 		private:
-			std::vector<KeyValuePair<T*, TypeValue*>*> privateRange;
+			TypePairVector privateRange;
 		public:
-			const std::vector<KeyValuePair<T*, TypeValue*>*> &getRange() const {
+			const TypePairVector &getRange() const {
 				return privateRange;
 			}
-			void setRange(const std::vector<KeyValuePair<T*, TypeValue*>*> &value) {
+			void setRange(const TypePairVector &value) {
 				privateRange = value;
 			}
 		private:
@@ -145,7 +156,7 @@ namespace IntervalTree {
 
 
 
-			IntervalNode(IntervalTree::Interval<T*> interval, TypeValue *value) {
+			IntervalNode(IntervalType interval, TypeValue *value) {
 //C# TO C++ CONVERTER WARNING: C# to C++ Converter converted the original 'null' assignment to a call to 'delete', but you should review memory allocation of all pointer variables in the converted code:
 				delete this->getLeft();
 //C# TO C++ CONVERTER WARNING: C# to C++ Converter converted the original 'null' assignment to a call to 'delete', but you should review memory allocation of all pointer variables in the converted code:
@@ -164,7 +175,7 @@ namespace IntervalTree {
 			/// <param name="elem">The elem.</param>
 			/// <param name="data">The data.</param>
 			/// <returns></returns>
-			static IntervalNode *Add(IntervalNode *elem, IntervalTree::Interval<T*> interval, TypeValue *value, bool &wasAdded, bool &wasSuccessful) {
+			static IntervalNode *Add(IntervalNode *elem, IntervalType interval, TypeValue *value, bool &wasAdded, bool &wasSuccessful) {
 				if (elem == nullptr) {
 					elem = new IntervalNode(interval, value);
 					wasAdded = true;
@@ -317,12 +328,12 @@ namespace IntervalTree {
 			/// The range intervals are sorted in the descending order of their End interval values
 			/// </summary>
 			/// <returns></returns>
-			IEnumerable<KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>*> *GetRange() {
+			IEnumerable<IntervalPair*> *GetRange() {
 				if (this->getRange().size() > 0) {
 					for (auto value : this->getRange()) {
-						auto kth = Interval<T*>(this->getInterval().Start, value->Key);
+						auto kth = IntervalType(this->getInterval().Start, value->first);
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
-						yield return new KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>(kth, value->Value);
+						yield return new IntervalPair(kth, value->Value);
 					}
 				}
 				else {
@@ -336,13 +347,13 @@ namespace IntervalTree {
 			/// The range intervals are sorted in the ascending order of their End interval values
 			/// </summary>
 			/// <returns></returns>
-			IEnumerable<KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>*> *GetRangeReverse() {
+			IEnumerable<IntervalPair*> *GetRangeReverse() {
 				if (this->getRange().size() > 0 && this->getRange().size() > 0) {
 					int rangeCount = this->getRange().size();
 					for (int k = rangeCount - 1; k >= 0; k--) {
-						auto kth = Interval<T*>(this->getInterval().Start, this->getRange()[k]->Key);
+						auto kth = IntervalType(this->getInterval().Start, this->getRange()[k]->first);
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
-						yield return new KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>(kth, this->getRange()[k]->Value);
+						yield return new IntervalPair(kth, this->getRange()[k]->Value);
 					}
 				}
 				else {
@@ -393,7 +404,7 @@ namespace IntervalTree {
 			/// <param name="node">The node.</param>
 			/// <param name="arg">The arg.</param>
 			/// <returns></returns>
-			static IntervalNode *Delete(IntervalNode *node, IntervalTree::Interval<T*> arg, bool &wasDeleted, bool &wasSuccessful) {
+			static IntervalNode *Delete(IntervalNode *node, IntervalType arg, bool &wasDeleted, bool &wasSuccessful) {
 				int cmp = arg.Start->compare(node->getInterval().Start);
 				IntervalNode *newChild = nullptr;
 
@@ -533,7 +544,7 @@ namespace IntervalTree {
 			/// <param name="subtree">The subtree.</param>
 			/// <param name="data">The data.</param>
 			/// <returns></returns>
-			static std::vector<KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>*> GetIntervalsStartingAt(IntervalNode *subtree, T *start) {
+			static IntervalPairVector GetIntervalsStartingAt(IntervalNode *subtree, T *start) {
 				if (subtree != nullptr) {
 					int compareResult = start->compare(subtree->getInterval().Start);
 					if (compareResult < 0) {
@@ -543,13 +554,13 @@ namespace IntervalTree {
 						return GetIntervalsStartingAt(subtree->getRight(), start);
 					}
 					else {
-						auto result = std::vector<KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>*>();
+						auto result = IntervalPairVector();
 						if (subtree->getRange().size() > 0) {
 							for (auto kvp : subtree->GetRangeReverse()) {
 								result->Add(kvp);
 							}
 						}
-						result->Add(new KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>(subtree->getInterval(), subtree->getValue()));
+						result->Add(new IntervalPair(subtree->getInterval(), subtree->getValue()));
 						return result;
 					}
 				}
@@ -564,7 +575,7 @@ namespace IntervalTree {
 			/// </summary>
 			/// <param name="toFind">To find.</param>
 			/// <param name="list">The list.</param>
-			void GetIntervalsOverlappingWith(IntervalTree::Interval<T*> toFind, std::vector<KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>*> &list) {
+			void GetIntervalsOverlappingWith(IntervalType toFind, IntervalPairVector &list) {
 				if (toFind.End->compare(this->getInterval().Start) <= 0) {
 					////toFind ends before subtree.Data begins, prune the right subtree
 					if (this->getLeft() != nullptr) {
@@ -585,18 +596,18 @@ namespace IntervalTree {
 
 					if (this->getInterval().OverlapsWith(toFind)) {
 						if (list.empty()) {
-							list = std::vector<KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>*>();
+							list = IntervalPairVector();
 						}
 
-						list.push_back(new KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>(this->getInterval(), this->getValue()));
+						list.push_back(new IntervalPair(this->getInterval(), this->getValue()));
 
 						////the max value is stored in the node, if the node doesn't overlap then neither are the nodes in its range 
 						if (this->getRange().size() > 0 && this->getRange().size() > 0) {
 							int rangeCount = this->getRange().size();
 							for (auto kvp : this->GetRange()) {
-								if (kvp->Key->OverlapsWith(toFind)) {
+								if (kvp->first->OverlapsWith(toFind)) {
 									if (list.empty()) {
-										list = std::vector<KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>*>();
+										list = IntervalPairVector();
 									}
 									list.push_back(kvp);
 								}
@@ -620,7 +631,7 @@ namespace IntervalTree {
 			/// </summary>
 			/// <param name="toFind">To find.</param>
 			/// <returns></returns>
-			IEnumerable<KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>*> *GetIntervalsOverlappingWith(IntervalTree::Interval<T*> toFind) {
+			IEnumerable<IntervalPair*> *GetIntervalsOverlappingWith(IntervalType toFind) {
 				if (toFind.End->compare(this->getInterval().Start) <= 0) {
 					////toFind ends before subtree.Data begins, prune the right subtree
 					if (this->getLeft() != nullptr) {
@@ -649,11 +660,11 @@ namespace IntervalTree {
 
 					if (this->getInterval().OverlapsWith(toFind)) {
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
-						yield return new KeyValuePair<IntervalTree::Interval<T*>*, TypeValue*>(this->getInterval(), this->getValue());
+						yield return new IntervalPair(this->getInterval(), this->getValue());
 
 						if (this->getRange().size() > 0 && this->getRange().size() > 0) {
 							for (auto kvp : this->GetRange()) {
-								if (kvp->Key->OverlapsWith(toFind)) {
+								if (kvp->first->OverlapsWith(toFind)) {
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
 									yield return kvp;
 								}
@@ -769,7 +780,7 @@ namespace IntervalTree {
 			/// </summary>
 			/// <param name="interval">The interval to be deleted.</param>
 			/// <returns></returns>
-			bool DeleteIntervalFromNodeWithRange(IntervalTree::Interval<T*> interval) {
+			bool DeleteIntervalFromNodeWithRange(IntervalType interval) {
 				if (this->getRange().size() > 0 && this->getRange().size() > 0) {
 					int rangeCount = this->getRange().size();
 					int intervalPosition = -1;
@@ -779,8 +790,8 @@ namespace IntervalTree {
 						intervalPosition = 0;
 					}
 					else if (rangeCount > 12) {
-						auto keyvalueComparer = new KeyValueComparer<T*, TypeValue*>(ComparerUtil::GetComparer());
-						int k = this->getRange().BinarySearch(new KeyValuePair<T*, TypeValue*>(interval.End, default(TypeValue)), keyvalueComparer);
+						auto keyvalueComparer = new PairComparer<T*, TypeValue*>(ComparerUtil::GetComparer());
+						int k = this->getRange().BinarySearch(new TypePair(interval.End, default(TypeValue)), keyvalueComparer);
 						if (k >= 0) {
 							intervalPosition = k + 1;
 						}
@@ -798,7 +809,7 @@ namespace IntervalTree {
 						return false;
 					}
 					else if (intervalPosition == 0) {
-						this->setInterval(Interval<T*>(this->getInterval().Start, this->getRange()[0]->Key));
+						this->setInterval(IntervalType(this->getInterval().Start, this->getRange()[0]->first));
 						this->setValue(this->getRange()[0]->Value);
 						this->getRange().RemoveAt(0);
 					}
@@ -832,28 +843,28 @@ namespace IntervalTree {
 				node->setRange(dataRange);
 			}
 
-			void AddIntervalValuePair(IntervalTree::Interval<T*> interval, TypeValue *value) {
+			void AddIntervalValuePair(IntervalType interval, TypeValue *value) {
 				if (this->getRange().empty()) {
-					this->setRange(std::vector<KeyValuePair<T*, TypeValue*>*>());
+					this->setRange(TypePairVector());
 				}
 
 				////always store the max End value in the node.Data itself .. store the Range list in decreasing order
 				if (interval.End->compare(this->getInterval().End) > 0) {
-					this->getRange().Insert(0, new KeyValuePair<T*, TypeValue*>(this->getInterval().End, this->getValue()));
+					this->getRange().Insert(0, new TypePair(this->getInterval().End, this->getValue()));
 					this->setInterval(interval);
 					this->setValue(value);
 				}
 				else {
 					bool wasAdded = false;
 					for (int i = 0; i < this->getRange().size(); i++) {
-						if (interval.End->compare(this->getRange()[i]->Key) >= 0) {
-							this->getRange().Insert(i, new KeyValuePair<T*, TypeValue*>(interval.End, value));
+						if (interval.End->compare(this->getRange()[i]->first) >= 0) {
+							this->getRange().Insert(i, new TypePair(interval.End, value));
 							wasAdded = true;
 							break;
 						}
 					}
 					if (!wasAdded) {
-						this->getRange().push_back(new KeyValuePair<T*, TypeValue*>(interval.End, value));
+						this->getRange().push_back(new TypePair(interval.End, value));
 					}
 				}
 			}
@@ -861,17 +872,20 @@ namespace IntervalTree {
 		};
 
 	private:
-		template<typename TKey, typename TValue>
-		class KeyValueComparer : public IComparer<KeyValuePair<TKey, TValue>*> {
+		template<typename TFirst, typename TSecond>
+		class PairComparer : public IComparer<std::pair<TFirst, TSecond>*> {
 		private:
-			IComparer<TKey> *keyComparer;
+			IComparer<TFirst> *keyComparer;
 
 			/// <summary>
-			/// Initializes a new instance of the <see cref="IntervalTree&lt;T, TypeValue&gt;.KeyValueComparer&lt;TKey, TValue&gt;"/> class.
+			/// Initializes a new instance of the <see cref="IntervalTree&lt;T, TypeValue&gt;.PairComparer&lt;TKey, TSecond&gt;"/> class.
 			/// </summary>
 			/// <param name="keyComparer">The key comparer.</param>
 		public:
-			KeyValueComparer(IComparer<TKey> *keyComparer) {
+			typedef std::pair<TFirst, TSecond> ComparerPair; // was KeyValuePair<TKey, TSecond>
+			typedef std::pair<IntervalType*, TypeValue> IntervalTypePair; // was KeyValuePair<IntervalType*, TypeValue>
+
+			PairComparer(IComparer<TFirst> *keyComparer) {
 				this->keyComparer = keyComparer;
 			}
 
@@ -883,8 +897,8 @@ namespace IntervalTree {
 			/// <returns>
 			/// Value Condition Less than zero is less than y.Zerox equals y.Greater than zero is greater than y.
 			/// </returns>
-			int Compare(KeyValuePair<TKey, TValue> *x, KeyValuePair<TKey, TValue> *y) {
-				return (-1) * this->keyComparer->Compare(x->Key, y->Key);
+			int Compare(ComparerPair *x, ComparerPair *y) {
+				return (-1) * this->keyComparer->Compare(x->first, y->first);
 			}
 
 			/// <summary>
@@ -895,8 +909,8 @@ namespace IntervalTree {
 			///   <c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
 			/// </returns>
 			virtual bool Equals(void *obj) override {
-				if (dynamic_cast<KeyValueComparer<TKey, TValue>*>(obj) != nullptr) {
-					return Object::Equals(this->keyComparer, (static_cast<KeyValueComparer<TKey, TValue>*>(obj))->keyComparer);
+				if (dynamic_cast<PairComparer<TFirst, TSecond>*>(obj) != nullptr) {
+					return Object::Equals(this->keyComparer, (static_cast<PairComparer<TFirst, TSecond>*>(obj))->keyComparer);
 				}
 				else {
 					return false;
@@ -932,7 +946,7 @@ namespace IntervalTree {
 		int Count;
 		IntervalNode *Root;
 		IComparer<T> *comparer;
-		KeyValueComparer<T, TypeValue> *keyvalueComparer;
+		PairComparer<T, TypeValue> *keyvalueComparer;
 
 
 
@@ -947,14 +961,14 @@ namespace IntervalTree {
 		/// Initializes a new instance of the <see cref="IntervalTree&lt;T, TypeValue&gt;"/> class.
 		/// </summary>
 		/// <param name="elems">The elems.</param>
-		IntervalTree(IEnumerable<KeyValuePair<Interval<T>*, TypeValue>*> *elems) {
+		IntervalTree(IEnumerable<IntervalTypePair*> *elems) {
 			if (elems != nullptr) {
 				for (auto elem : elems) {
-					Add(elem->Key, elem->Value);
+					Add(elem->first, elem->second);
 				}
 			}
 			this->comparer = ComparerUtil::GetComparer();
-			this->keyvalueComparer = new KeyValueComparer<T, TypeValue>(this->comparer);
+			this->keyvalueComparer = new PairComparer<T, TypeValue>(this->comparer);
 		}
 
 
@@ -978,7 +992,7 @@ namespace IntervalTree {
 		/// </summary>
 		/// <param name="arg">The arg.</param>
 		void Add(T x, T y, TypeValue value) {
-			Add(Interval<T>(x, y), value);
+			Add(IntervalType(x, y), value);
 		}
 
 		/// <summary>
@@ -988,7 +1002,7 @@ namespace IntervalTree {
 		/// Note: this is okay for problems where intervals starting at the same time /value is not a frequent occurrence, however you can use other data structure for better performance depending on your problem needs
 		/// </summary>
 		/// <param name="arg">The arg.</param>
-		bool Add(Interval<T> interval, TypeValue value) {
+		bool Add(IntervalType interval, TypeValue value) {
 			bool wasAdded = false;
 			bool wasSuccessful = false;
 
@@ -1011,7 +1025,7 @@ namespace IntervalTree {
 		/// In this case, it is easy enough to either specify the (interval, value) pair to be deleted or enforce uniqueness by changing the Add procedure.
 		/// </summary>
 		/// <param name="arg">The arg.</param>
-		bool Delete(Interval<T> arg) {
+		bool Delete(IntervalType arg) {
 			if (this->Root != nullptr) {
 				bool wasDeleted = false;
 				bool wasSuccessful = false;
@@ -1037,7 +1051,7 @@ namespace IntervalTree {
 		/// </summary>
 		/// <param name="toFind">To find.</param>
 		/// <param name="list">The list.</param>
-		void GetIntervalsOverlappingWith(Interval<T> toFind, std::vector<KeyValuePair<Interval<T>*, TypeValue>*> &list) {
+		void GetIntervalsOverlappingWith(IntervalType toFind, std::vector<IntervalTypePair*> &list) {
 			if (this->Root != nullptr) {
 				this->Root->GetIntervalsOverlappingWith(toFind, list);
 			}
@@ -1049,7 +1063,7 @@ namespace IntervalTree {
 		/// </summary>
 		/// <param name="toFind">To find.</param>
 		/// <returns></returns>
-		IEnumerable<KeyValuePair<Interval<T>*, TypeValue>*> *GetIntervalsOverlappingWith(Interval<T> toFind) {
+		IEnumerable<IntervalTypePair*> *GetIntervalsOverlappingWith(IntervalType toFind) {
 			return (this->Root != nullptr) ? this->Root->GetIntervalsOverlappingWith(toFind) : nullptr;
 		}
 
@@ -1059,7 +1073,7 @@ namespace IntervalTree {
 		/// </summary>
 		/// <param name="arg">The arg.</param>
 		/// <returns></returns>
-		std::vector<KeyValuePair<Interval<T>*, TypeValue>*> GetIntervalsStartingAt(T arg) {
+		std::vector<IntervalTypePair*> GetIntervalsStartingAt(T arg) {
 			return IntervalNode::GetIntervalsStartingAt(this->Root, arg);
 		}
 
@@ -1069,7 +1083,7 @@ namespace IntervalTree {
 		/// Gets the collection of intervals (in ascending order of their Start values).
 		/// Those intervals starting at the same time/value are sorted further based on their End value (i.e. returned in ascending order of their End values)
 		/// </summary>
-		const IEnumerable<Interval<T>*> &getIntervals() const {
+		const IEnumerable<IntervalType*> &getIntervals() const {
 			if (this->Root == nullptr) {
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
 				yield break;
@@ -1079,7 +1093,7 @@ namespace IntervalTree {
 			while (p != nullptr) {
 				for (auto rangeNode : p->GetRangeReverse()) {
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
-					yield return rangeNode->Key;
+					yield return rangeNode->first;
 				}
 
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
@@ -1115,7 +1129,7 @@ namespace IntervalTree {
 		/// Gets the interval value pairs.
 		/// Those intervals starting at the same time/value are sorted further based on their End value (i.e. returned in ascending order of their End values)
 		/// </summary>
-		const IEnumerable<KeyValuePair<Interval<T>*, TypeValue>*> &getIntervalValuePairs() const {
+		const IEnumerable<IntervalTypePair*> &getIntervalValuePairs() const {
 			if (this->Root == nullptr) {
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
 				yield break;
@@ -1129,7 +1143,7 @@ namespace IntervalTree {
 				}
 
 //C# TO C++ CONVERTER TODO TASK: C++ does not have an equivalent to the C# 'yield' keyword:
-				yield return new KeyValuePair<Interval<T>*, TypeValue>(p->getInterval(), p->getValue());
+				yield return new IntervalTypePair(p->getInterval(), p->getValue());
 				p = p->Successor();
 			}
 		}
@@ -1143,7 +1157,7 @@ namespace IntervalTree {
 		/// <param name="data">The data.</param>
 		/// <param name="value">The value.</param>
 		/// <returns></returns>
-		bool TryGetInterval(Interval<T> data, TypeValue &value) {
+		bool TryGetInterval(IntervalType data, TypeValue &value) {
 			return this->TryGetIntervalImpl(this->Root, data, value);
 		}
 
@@ -1156,6 +1170,7 @@ namespace IntervalTree {
 			this->Count = 0;
 		}
 
+#if 0
 		/// <summary>
 		/// Prints this instance (to console).
 		/// </summary>
@@ -1167,12 +1182,13 @@ namespace IntervalTree {
 				if (node::Range != nullptr) {
 					std::cout << " ... ";
 					for (auto rangeNode : node::GetRange()) {
-						std::cout << std::string::Format("{0}  ", rangeNode->Key);
+						std::cout << std::string::Format("{0}  ", rangeNode->first);
 					}
 				}
 				std::cout << std::endl;
 			});
 		}
+#endif
 
 		/// <summary>
 		/// Searches for interval starting at.
@@ -1181,7 +1197,7 @@ namespace IntervalTree {
 		/// <param name="data">The data.</param>
 		/// <returns></returns>
 	private:
-		bool TryGetIntervalImpl(IntervalNode *subtree, Interval<T> data, TypeValue &value) {
+		bool TryGetIntervalImpl(IntervalNode *subtree, IntervalType data, TypeValue &value) {
 			if (subtree != nullptr) {
 				int compareResult = data.Start->compare(subtree->getInterval().Start);
 
